@@ -1,20 +1,10 @@
-<h1 align="center">
-    <img src="https://github.com/user-attachments/assets/294f9cdc-38ba-4cdc-beff-82fe78c9a023" width="100%" alt="AgentOnBrowser" /><br>
-</h1>
+<h1 align="center">AgentOnBrowser</h1>
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/nanobrowser)
-[![Twitter](https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/nanobrowser_ai)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/Be9BQ6KPdm)
-[![DeepWiki][deepwiki-badge]](https://deepwiki.com/nanobrowser/nanobrowser)
-[![Sponsor](https://img.shields.io/badge/Sponsor-ff69b4?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/alexchenzl)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 </div>
-
-<!-- The DeepWiki mark is inlined in the badge: deepwiki.com refuses requests that do not come from a browser. -->
-
-[deepwiki-badge]: https://img.shields.io/badge/DeepWiki-1E293B?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAC8AAAAvCAMAAABE%2BWOeAAAAY1BMVEX%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2BDm4mgAAAAIXRSTlMA%2FwAAL%2BkAAGbYIwAA0xpL8fgUwceTXOO2qqCKggVxOgugMgR1AAABkElEQVR42uWW2ZasIAxF5ahgyeiEs9b%2Ff2XrtRzK6xKfu%2FOIGyTJSYLn7UY5wL3H5sNmlYZ4Rguo2hBiGgHqpinSdqJnC7veuYNjkGSzPAK7xVmQJeRgSaX8u6vHJTmZTO8CE4Rn%2FhXTX8OLB3w4sjWREOdsXPCkwJIZrnNSB9%2BiuuITDS4Y4npOZNlSOPhJeKMKivVDqdmudJpW5Mq%2BNJLpXYW%2B6hLisrDo6S7%2BtDHbTbKiLq92WHwVV76sTiUGvNsLPjo67cGLJu9elnE6%2F7Bx8VNq3kXHP2v%2B%2Fxo%2F8%2FOpWwyon7l5j%2B2ZR%2BXkGfSItRBT6eAFgipJ6njRCgaHv1CFWdpJOsUT2tzygN3i8Rq0rcxd%2FAXT0qkHksUfVdO%2BMG75DD270zORg43kKkNTqIM8r%2Fhu9hqRXPrdeKywK776dxyFmtpwaSl31KPRWLPSW%2BBBPxG7DOnf6p8X82g4FV9p2f10VI05dpoUrunLx3zTYfBkZvOPVqR2DNO9ZtI2Md0bjx8QFL3%2F5DFwcMN58R%2BkZhV56KabXwAAAABJRU5ErkJggg%3D%3D
 
 ## 🌐 AgentOnBrowser
 
@@ -22,22 +12,19 @@ AgentOnBrowser is an open-source AI agent that works in your own browser. Tell i
 
 Based on [Nanobrowser](https://github.com/nanobrowser/nanobrowser) (Apache-2.0).
 
-⬇️ Get [AgentOnBrowser from the Chrome Web Store](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) for free
-
-👏 Join the community on [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
-
-❤️ Support the project by [sponsoring us](https://github.com/sponsors/alexchenzl). Every contribution helps keep AgentOnBrowser free and open source.
-
 ## 🔥 Why AgentOnBrowser?
 
 - **Free.** No subscription and no hidden costs. Use your own API key or a local model, and pay only for what you use.
-- **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model you choose. A daily count of users and usage counts are sent without an ID and never include your pages or sites; see [PRIVACY.md](PRIVACY.md).
-- **Flexible LLM.** Choose from many cloud providers, or run a model on your own computer, and switch whenever you like. No lock-in.
+- **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model you choose. Telemetry is disabled in the build itself: nothing is collected and nothing is sent.
+- **Flexible LLM.** Choose from many cloud providers, run a model on your own computer, or connect a local OpenCode V2 agent service. No lock-in.
 - **Open source.** All the code is public, so you can see exactly how it works and change it to fit your needs.
 
 ## 📊 Key Features
 
 - **Chat in the side panel**: say what you need in plain words. The agent reads pages, clicks, types and moves between tabs to get it done.
+- **OpenCode V2 agents**: connect a local OpenCode V2 service as the brain. The service keeps its own model configuration, and the extension attaches its browser tools to the agent's session over client MCP.
+- **Permission cards**: when the agent service asks for a permission, the panel shows a card and sends your answer (allow once or deny) back to it.
+- **Service status dots**: every configured agent service is polled for its health, and the picker, the composer and the settings page show a breathing dot: online, checking, restricted (auth or origin) or offline.
 - **Several tasks at once**: each task works in its own tab group, so you can run a few side by side and keep browsing.
 - **You choose when it asks**: pick Ask or Auto mode, and set rules for each site (see below).
 - **Your choice of model**: cloud or local. Pick the model, and how hard it thinks, for each chat.
@@ -78,11 +65,12 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 | --- | --- |
 | Cloud | Anthropic, OpenAI, Google Gemini, AWS Bedrock, OpenRouter, xAI Grok, DeepSeek, Mistral, and any OpenAI-compatible endpoint |
 | Local | Ollama and LM Studio, and other servers (llama.cpp, vLLM and others) through the OpenAI-compatible provider |
+| Agent service | OpenCode V2 (a local service that brings its own model) |
 
 - **A model must support tool calling.** Test models in Settings checks each model and marks the ones that cannot be used.
 - **Choose the model and the reasoning effort** in the panel, per conversation. Settings holds the defaults.
 - **Vision models** can also take screenshots of the page and read the images you attach.
-- **Local models** work best for simple, clear tasks. We currently recommend **Qwen3.8 27B**. Give them a context window of 16k tokens or more. Ollama needs `OLLAMA_ORIGINS` to allow the extension, and LM Studio needs CORS on; the provider card shows how when a request is refused.
+- **Local models** work best for simple, clear tasks. Give them a context window of 16k tokens or more. Ollama needs `OLLAMA_ORIGINS` to allow the extension, and LM Studio needs CORS on; the provider card shows how when a request is refused.
 - **Voice input** uses OpenAI's or Gemini's voice model with your key from that provider.
 
 ## 💡 Try these
@@ -95,34 +83,37 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 
 > "Extract the top 10 headlines from TechCrunch in the last 24 hours and save them as a CSV file."
 
-## 🚀 Quick Start
+## 🚀 Install and Set Up
 
-1. **Install it** from the [Chrome Web Store](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal): click `Add to Chrome` and confirm. In Edge, first allow extensions from other stores when Edge asks.
+AgentOnBrowser is built from source and loaded unpacked:
 
-2. **Set it up:** the welcome page opens and helps you connect a cloud provider or a local model. You can also do it later in Settings → Providers.
-
-3. **Use it:** click the AgentOnBrowser icon in the toolbar, or press `Alt+Shift+N`, to open the side panel on the current tab.
-
-## 🔧 Build from Source
-
-1. **Prerequisites:** [Node.js](https://nodejs.org/) 24 LTS and [pnpm](https://pnpm.io/installation) 10 (`corepack` switches to the pinned 10.34.7).
-
-2. **Clone and build:**
+1. **Build it** (needs [Node.js](https://nodejs.org/) 24 LTS and [pnpm](https://pnpm.io/installation) 10):
 
    ```bash
-   git clone https://github.com/nanobrowser/nanobrowser.git
-   cd nanobrowser
+   git clone https://github.com/holny/agent-on-browser.git
+   cd agent-on-browser
    corepack enable # skip if pnpm 10 is already installed
    pnpm install
    pnpm build      # builds the extension into dist/
    ```
 
-3. **Load it in Chrome or Edge:**
+2. **Load it in Chrome or Edge:**
    - Open `chrome://extensions` (in Edge, `edge://extensions`).
    - Turn on `Developer mode` (top right).
    - Click `Load unpacked` and choose the `dist` folder.
 
-Then set it up and use it as in the Quick Start. To update, pull the latest source, run `pnpm build` again, and click the reload icon on the AgentOnBrowser card in the extensions page.
+3. **Set it up:** the welcome page opens and helps you connect a cloud provider, a local model, or an OpenCode V2 agent service. You can also do it later in Settings → Providers and Settings → Agent.
+
+4. **Use it:** click the AgentOnBrowser icon in the toolbar, or press `Alt+Shift+N`, to open the side panel on the current tab. To update, pull the latest source, run `pnpm build` again, and click the reload icon on the AgentOnBrowser card in the extensions page.
+
+## 🔌 Connect an OpenCode V2 Agent
+
+Instead of configuring a model provider, you can let a running [OpenCode](https://github.com/nanobrowser/nanobrowser) V2 service (or your own build of it) answer the runs:
+
+1. **Start the service** on your machine, and make sure its origin list allows this extension's origin (`chrome://extensions` → AgentOnBrowser → ID). The service rejects WebSocket connections from origins it does not know.
+2. **Add the agent**: Settings → Agent → Add, then fill in the service address (for example `http://127.0.0.1:49377`), the password if the service asks for one, and an existing project directory.
+3. **Test the connection**, then pick the agent in the panel. The dot next to its name shows the service's live status.
+4. **Run a task**: the extension attaches its browser tools to the service's session, and when the service asks for a permission, a card in the panel sends your answer back to it.
 
 ## 🛠️ Development
 
@@ -148,26 +139,17 @@ The layer talks to the page only through Chrome's `chrome.debugger` API, and use
 
 ## 🤝 Contributing
 
-Contributions of all kinds are welcome:
-
-- **Share prompts and use cases** on our [Discord server](https://discord.gg/NN3ABHggMK).
-- **Give feedback** on how AgentOnBrowser works for you, on [Discord](https://discord.gg/NN3ABHggMK) or in [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions).
-- **Contribute code**: read [CONTRIBUTING.md](CONTRIBUTING.md), then open a pull request for a bug fix or a feature. [CONTRIBUTING.md](CONTRIBUTING.md#what-a-pull-request-may-not-change) says which files a pull request may not change; ask for a change to one of them in an issue.
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first; it also says which files a pull request may not change.
 
 ## 🔒 Security
 
-If you find a security vulnerability, please **do not** disclose it in public issues, pull requests or discussions. Report it through a [GitHub Security Advisory](https://github.com/nanobrowser/nanobrowser/security/advisories/new), so it can be fixed before it is made public. See [SECURITY.md](SECURITY.md).
-
-## 💬 Community
-
-- [Discord](https://discord.gg/Be9BQ6KPdm): chat with the team and the community
-- [X](https://x.com/nanobrowser_ai): updates and announcements
-- [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions): ideas and questions
+If you find a security vulnerability, please **do not** disclose it in public issues, pull requests or discussions. Report it through a [GitHub Security Advisory](https://github.com/holny/agent-on-browser/security/advisories/new), so it can be fixed before it is made public. See [SECURITY.md](SECURITY.md).
 
 ## 👏 Acknowledgments
 
-AgentOnBrowser builds on other great open-source projects:
+AgentOnBrowser is based on [Nanobrowser](https://github.com/nanobrowser/nanobrowser) and builds on other great open-source projects:
 
+- [Nanobrowser](https://github.com/nanobrowser/nanobrowser)
 - [Puppeteer](https://github.com/puppeteer/puppeteer)
 - [Vercel AI SDK](https://github.com/vercel/ai)
 - [WXT](https://wxt.dev)
