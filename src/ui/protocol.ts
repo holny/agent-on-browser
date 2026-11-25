@@ -35,6 +35,8 @@ export type PanelCommand =
       attachments: AttachmentRef[];
       context: ContextRef[];
       mode: PermissionMode;
+      /** 本对话选择的智能体；缺省用设置里的默认。 */
+      agentId?: string;
       /** The conversation's model and effort: the worker writes them as its live pair. */
       model: ModelRef | null;
       reasoning: ReasoningEffort;
@@ -59,6 +61,8 @@ export type PanelCommand =
   | { type: 'edit' | 'restart'; conversationId: string; entryId: string; text?: string }
   | { type: 'retry'; conversationId: string }
   | { type: 'set-mode'; conversationId: string; mode: PermissionMode }
+  /** 本对话选择运行的智能体；缺省用设置里的默认。 */
+  | { type: 'set-agent'; conversationId: string; agentId: string }
   /** Writes the conversation's live pair, and the settings: the latest choice is the default. */
   | { type: 'set-model'; conversationId: string; model: ModelRef; reasoning: ReasoningEffort }
   | { type: 'history'; query?: string }
@@ -141,12 +145,20 @@ export type DisplayEntry =
 
 export interface OpenPrompt {
   id: string;
-  kind: 'write-card' | 'handover' | 'ask-takeover' | 'ask-input' | 'save-file' | 'confirm';
+  kind: 'write-card' | 'handover' | 'ask-takeover' | 'ask-input' | 'save-file' | 'confirm' | 'agent-permission';
   conversationId: string;
   tabId?: number;
   /** Everything the card shows; fixed titles and lines are the panel's own strings. */
   data: Record<string, unknown>;
   openedAt: string;
+}
+
+export interface AgentPermissionData {
+  tool?: unknown;
+  action?: unknown;
+  resources?: unknown;
+  pattern?: unknown;
+  canRemember?: boolean;
 }
 
 export interface ConversationSummary {
@@ -218,7 +230,7 @@ export type PanelEventBody =
   | { type: 'usage'; turn: Usage; total: Usage }
   | { type: 'history'; items: ConversationSummary[] }
   | { type: 'tabs'; tabs: ScopeTab[] }
-  /** Text the user selected with "Ask Nanobrowser about this": a quote chip in the composer. */
+  /** Text the user selected with "Ask AgentOnBrowser about this": a quote chip in the composer. */
   | { type: 'selection'; text: string; url: string; title: string }
   /** A file the worker made for the composer (a screenshot of the tab), with a thumbnail. */
   | { type: 'attached'; ref: AttachmentRef; preview?: string }

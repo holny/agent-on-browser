@@ -10,7 +10,7 @@ import { openTab } from '../tabs';
 
 function base64Of(bytes: number): string {
   // Text bytes, so the page can confirm the size; built in pieces to keep btoa's input small.
-  const piece = 'Nanobrowser upload size check. '.repeat(1024);
+  const piece = 'AgentOnBrowser upload size check. '.repeat(1024);
   const raw = piece.repeat(Math.ceil(bytes / piece.length)).slice(0, bytes);
   let out = '';
   for (let i = 0; i < raw.length; i += 3 * 65536) out += btoa(raw.slice(i, i + 3 * 65536));

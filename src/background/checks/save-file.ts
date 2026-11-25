@@ -25,7 +25,7 @@ async function remove(id: number): Promise<void> {
 }
 
 function text(bytes: number): string {
-  const line = 'Nanobrowser save check, a line of text to fill the file.\n';
+  const line = 'AgentOnBrowser save check, a line of text to fill the file.\n';
   return line.repeat(Math.ceil(bytes / line.length)).slice(0, bytes);
 }
 

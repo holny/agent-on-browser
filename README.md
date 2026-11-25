@@ -1,5 +1,5 @@
 <h1 align="center">
-    <img src="https://github.com/user-attachments/assets/294f9cdc-38ba-4cdc-beff-82fe78c9a023" width="100%" alt="Nanobrowser" /><br>
+    <img src="https://github.com/user-attachments/assets/294f9cdc-38ba-4cdc-beff-82fe78c9a023" width="100%" alt="AgentOnBrowser" /><br>
 </h1>
 
 <div align="center">
@@ -16,17 +16,19 @@
 
 [deepwiki-badge]: https://img.shields.io/badge/DeepWiki-1E293B?style=for-the-badge&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAC8AAAAvCAMAAABE%2BWOeAAAAY1BMVEX%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2BDm4mgAAAAIXRSTlMA%2FwAAL%2BkAAGbYIwAA0xpL8fgUwceTXOO2qqCKggVxOgugMgR1AAABkElEQVR42uWW2ZasIAxF5ahgyeiEs9b%2Ff2XrtRzK6xKfu%2FOIGyTJSYLn7UY5wL3H5sNmlYZ4Rguo2hBiGgHqpinSdqJnC7veuYNjkGSzPAK7xVmQJeRgSaX8u6vHJTmZTO8CE4Rn%2FhXTX8OLB3w4sjWREOdsXPCkwJIZrnNSB9%2BiuuITDS4Y4npOZNlSOPhJeKMKivVDqdmudJpW5Mq%2BNJLpXYW%2B6hLisrDo6S7%2BtDHbTbKiLq92WHwVV76sTiUGvNsLPjo67cGLJu9elnE6%2F7Bx8VNq3kXHP2v%2B%2Fxo%2F8%2FOpWwyon7l5j%2B2ZR%2BXkGfSItRBT6eAFgipJ6njRCgaHv1CFWdpJOsUT2tzygN3i8Rq0rcxd%2FAXT0qkHksUfVdO%2BMG75DD270zORg43kKkNTqIM8r%2Fhu9hqRXPrdeKywK776dxyFmtpwaSl31KPRWLPSW%2BBBPxG7DOnf6p8X82g4FV9p2f10VI05dpoUrunLx3zTYfBkZvOPVqR2DNO9ZtI2Md0bjx8QFL3%2F5DFwcMN58R%2BkZhV56KabXwAAAABJRU5ErkJggg%3D%3D
 
-## 🌐 Nanobrowser
+## 🌐 AgentOnBrowser
 
-Nanobrowser is an open-source AI agent that works in your own browser. Tell it a task in the side panel; it reads the pages, clicks, types and moves between tabs to get it done, and it asks you before it submits, sends, deletes or uploads anything.
+AgentOnBrowser is an open-source AI agent that works in your own browser. Tell it a task in the side panel; it reads the pages, clicks, types and moves between tabs to get it done, and it asks you before it submits, sends, deletes or uploads anything.
 
-⬇️ Get [Nanobrowser from the Chrome Web Store](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) for free
+Based on [Nanobrowser](https://github.com/nanobrowser/nanobrowser) (Apache-2.0).
+
+⬇️ Get [AgentOnBrowser from the Chrome Web Store](https://chromewebstore.google.com/detail/nanobrowser/imbddededgmcgfhfpcjmijokokekbkal) for free
 
 👏 Join the community on [Discord](https://discord.gg/NN3ABHggMK) | [X](https://x.com/nanobrowser_ai)
 
-❤️ Support the project by [sponsoring us](https://github.com/sponsors/alexchenzl). Every contribution helps keep Nanobrowser free and open source.
+❤️ Support the project by [sponsoring us](https://github.com/sponsors/alexchenzl). Every contribution helps keep AgentOnBrowser free and open source.
 
-## 🔥 Why Nanobrowser?
+## 🔥 Why AgentOnBrowser?
 
 - **Free.** No subscription and no hidden costs. Use your own API key or a local model, and pay only for what you use.
 - **Private.** Everything runs in your browser. Your keys stay in the browser and go only to their own provider. Pages go only to the model you choose. A daily count of users and usage counts are sent without an ID and never include your pages or sites; see [PRIVACY.md](PRIVACY.md).
@@ -51,7 +53,7 @@ Nanobrowser is an open-source AI agent that works in your own browser. Tell it a
 ## 🌐 Browser Support
 
 - **Supported:** Chrome and Edge.
-- **Not supported:** Firefox, Safari, and other Chromium-based browsers (Opera, Arc, Brave and others). Nanobrowser may work in them, but they are not tested.
+- **Not supported:** Firefox, Safari, and other Chromium-based browsers (Opera, Arc, Brave and others). AgentOnBrowser may work in them, but they are not tested.
 
 ## 🛡️ You decide what the agent may do
 
@@ -99,7 +101,7 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
 
 2. **Set it up:** the welcome page opens and helps you connect a cloud provider or a local model. You can also do it later in Settings → Providers.
 
-3. **Use it:** click the Nanobrowser icon in the toolbar, or press `Alt+Shift+N`, to open the side panel on the current tab.
+3. **Use it:** click the AgentOnBrowser icon in the toolbar, or press `Alt+Shift+N`, to open the side panel on the current tab.
 
 ## 🔧 Build from Source
 
@@ -120,7 +122,7 @@ You can also set a site to **Allow** (go ahead in both modes), **Ask** (ask in b
    - Turn on `Developer mode` (top right).
    - Click `Load unpacked` and choose the `dist` folder.
 
-Then set it up and use it as in the Quick Start. To update, pull the latest source, run `pnpm build` again, and click the reload icon on the Nanobrowser card in the extensions page.
+Then set it up and use it as in the Quick Start. To update, pull the latest source, run `pnpm build` again, and click the reload icon on the AgentOnBrowser card in the extensions page.
 
 ## 🛠️ Development
 
@@ -149,7 +151,7 @@ The layer talks to the page only through Chrome's `chrome.debugger` API, and use
 Contributions of all kinds are welcome:
 
 - **Share prompts and use cases** on our [Discord server](https://discord.gg/NN3ABHggMK).
-- **Give feedback** on how Nanobrowser works for you, on [Discord](https://discord.gg/NN3ABHggMK) or in [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions).
+- **Give feedback** on how AgentOnBrowser works for you, on [Discord](https://discord.gg/NN3ABHggMK) or in [GitHub Discussions](https://github.com/nanobrowser/nanobrowser/discussions).
 - **Contribute code**: read [CONTRIBUTING.md](CONTRIBUTING.md), then open a pull request for a bug fix or a feature. [CONTRIBUTING.md](CONTRIBUTING.md#what-a-pull-request-may-not-change) says which files a pull request may not change; ask for a change to one of them in an issue.
 
 ## 🔒 Security
@@ -164,7 +166,7 @@ If you find a security vulnerability, please **do not** disclose it in public is
 
 ## 👏 Acknowledgments
 
-Nanobrowser builds on other great open-source projects:
+AgentOnBrowser builds on other great open-source projects:
 
 - [Puppeteer](https://github.com/puppeteer/puppeteer)
 - [Vercel AI SDK](https://github.com/vercel/ai)
@@ -175,4 +177,4 @@ Thanks to their creators and contributors.
 
 ## 📄 License
 
-Nanobrowser is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
+AgentOnBrowser is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.

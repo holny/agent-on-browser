@@ -4,7 +4,7 @@ This file provides guidance to AI coding assistants (e.g., Claude Code, GitHub C
 
 ## Project Overview
 
-This repository is the next version of Nanobrowser, an AI web automation Chrome extension, rebuilt from the ground up. It has two parts:
+This repository is the next version of AgentOnBrowser, an AI web automation Chrome extension, rebuilt from the ground up. It has two parts:
 
 - **The browser control layer**: a deterministic layer that observes a page, acts on it, and reports what happened. It is part of the extension, and its client is the extension's own agent, in-process.
 - **The extension** that end users run: the side panel, the one agent that works in it, model providers, and the features around them. It sits on top of the layer.
@@ -12,7 +12,7 @@ This repository is the next version of Nanobrowser, an AI web automation Chrome 
 ## Scope
 
 - **Built and maintained:** the browser control layer, a simple Chrome extension for testing it by hand (the test panel), fixture pages, unit tests, and the automated checks.
-- **Built and maintained:** the extension. Its first release has a side panel per tab, one agent loop, model providers through the Vercel AI SDK, the permission modes, shortcuts, attachments (images and text), upload into pages, saved files, voice input through OpenAI's or Gemini's voice model, three UI languages (English, Simplified Chinese, Traditional Chinese), a glowing border on the pages the agent works on (with a switch in Settings), anonymous analytics (a daily count of users and usage counts, both on until the user turns them off) with no identifier, and a card that asks a user who uses it often to rate it in the store.
+- **Built and maintained:** the extension. Its first release has a side panel per tab, one agent loop, model providers through the Vercel AI SDK, the permission modes, shortcuts, attachments (images and text), upload into pages, saved files, voice input through OpenAI's or Gemini's voice model, three UI languages (English, Simplified Chinese, Traditional Chinese), a glowing border on the pages the agent works on (with a switch in Settings), telemetry that is disabled in the build itself (nothing is collected or sent), with no rating card.
 - **Not in the first release:** for example skills the model loads, site notes, saved memory, the in-page Stop pill, PDF and Office parsing, the text tool-call parser, scheduled tasks. Do not add any of these unless asked.
 - **Not in scope:** an MCP bridge, browsers other than Chrome and Edge, a planner and navigator design, several cooperating agents.
 
@@ -84,6 +84,22 @@ The extension:
 - `src/side-panel/` - The chat UI
 - `src/options/` - The settings UI
 
+Each module above has its own `AGENTS.md` with a where-to-look table and its local rules: `src/browser-control/` and `src/browser-control/core/`, `src/agent/`, `src/llm/`, `src/store/`, `src/extension/`, `src/background/`, `src/ui/`.
+
+## Where to look
+
+| Task | Location |
+| --- | --- |
+| Add or change a tool the agent can call | `src/browser-control/core/tools/` + `src/browser-control/protocol/catalogue.ts` |
+| Context management (elision, compaction) | `src/agent/elision.ts`, `src/agent/compaction.ts` |
+| Add a model provider | `src/llm/providers.ts` |
+| An IndexedDB schema change | `src/store/db.ts` |
+| Permission modes, site rules | `src/extension/permissions.ts` |
+| A panel ↔ worker message | `src/ui/protocol.ts` |
+| A UI string, a new language | `src/ui/locales/`, `src/ui/i18n.ts` |
+| An automated check, a scenario set | `src/background/checks/`, `src/background/scenarios/` |
+| The manifest's permission lists | `src/ui/manifest-permissions.ts` (maintainer-only; the file guard fails a pull request that changes it) |
+
 **Import rules:**
 
 - Nothing under `src/browser-control/` imports from outside that folder, and other code imports the layer only through `src/browser-control/index.ts`.
@@ -100,7 +116,7 @@ pnpm 10.34.7 is pinned in `package.json` (`packageManager`). If the global `pnpm
 - `pnpm install` - Install dependencies (also runs `wxt prepare`)
 - `pnpm dev` - WXT development mode; load `dist/` unpacked in Chrome
 - `pnpm build` - Build the Chrome MV3 extension into `dist/`
-- `pnpm zip` - Build, then pack `dist/` into `dist-zip/nanobrowser-<version>.zip` (source maps left out) for a release or the Chrome Web Store
+- `pnpm zip` - Build, then pack `dist/` into `dist-zip/agentonbrowser-<version>.zip` (source maps left out) for a release or the Chrome Web Store
 - `pnpm type-check` - TypeScript type checking
 - `pnpm lint` - ESLint, including the import rules: the layer's (`src/browser-control/`) and the extension's (Import rules, above)
 - `pnpm test` - Unit tests (Vitest); tests live in `__tests__/` folders under `src/`
@@ -112,7 +128,7 @@ pnpm 10.34.7 is pinned in `package.json` (`packageManager`). If the global `pnpm
 
 CI (`.github/workflows/ci.yml`) runs `prettier --check`, `pnpm lint`, `pnpm type-check`, `pnpm test` and `pnpm build` on every push and pull request, on Ubuntu with the newest Node 24 and the pinned pnpm. Its actions are pinned to a commit, and its token can only read. The browser checks (`pnpm autorun`) and the checks that call real models (the evaluations, the model smoke run) are not in CI: they are run by hand, before a merge that touches what they cover and before a release. The file guard (`.github/workflows/file-guard.yml`) is the other required check on a pull request: it fails one that changes a path on its deny list (the files tools run or load on their own, and the other files only the maintainer changes) or a path with unusual characters, or 300 files or more, and it never checks out the pull request's code. `CONTRIBUTING.md` says in words which files a pull request may not change. CI runs on a pull request from a fork once a maintainer approves the run.
 
-The extension's dependencies: `ai` with `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/openai` and `@ai-sdk/amazon-bedrock`, `aws4fetch` (signing for Bedrock's model list), `idb`, `react-markdown` with `rehype-sanitize` and `remark-gfm`, and `@radix-ui/react-dialog`; `fake-indexeddb` is a development dependency for the store tests. Any other dependency is proposed in a pull request that changes only `dependencies` or `devDependencies` in `package.json`, with the lockfile `pnpm install` writes, as `CONTRIBUTING.md` says, and the maintainers decide. Settings → About lists them with their licences, and a unit test keeps that list equal to `package.json`.
+The extension's dependencies: `ai` with `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/openai` and `@ai-sdk/amazon-bedrock`, `aws4fetch` (signing for Bedrock's model list), `idb`, `react-markdown` with `rehype-sanitize` and `remark-gfm`, and `@radix-ui/react-dialog`; `fake-indexeddb` is a development dependency for the store tests. Any other dependency is proposed in a pull request that changes only `dependencies` or `devDependencies` in `package.json`, with the lockfile `pnpm install` writes, as `CONTRIBUTING.md` says, and the maintainers decide. the licences of the dependencies are kept in `LICENSE` and the upstream notices in the repository (the About page no longer lists them).
 
 ## Working rules
 

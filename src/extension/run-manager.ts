@@ -26,7 +26,18 @@ import {
   titleFrom,
   updateConversation,
 } from '@src/store/conversations';
-import { DEFAULT_SETTINGS, getLive, removeLive, setLive, settingsStorage } from '@src/store/settings';
+import {
+  agentKeyOf,
+  agentKeysStorage,
+  agentsStorage,
+  BUILTIN_AGENT_ID,
+  DEFAULT_SETTINGS,
+  findAgent,
+  getLive,
+  removeLive,
+  setLive,
+  settingsStorage,
+} from '@src/store/settings';
 import { NOTE_LABEL, RunWriter } from '@src/agent/records';
 import { planRestore, RESTART_NOTE, takenOver } from '@src/agent/restore';
 import { runCompaction } from '@src/agent/compaction';
@@ -53,6 +64,7 @@ import { notifyFinished, notifyNeeds } from './notify';
 import { thumbnail } from './thumbnail';
 import { isNumberedCopy, saveText } from './downloads';
 import { checkSave } from '@src/agent/save-file';
+import { runV2Turn } from './opencode-v2/engine';
 import { conversationMarkdown, exportName } from '@src/agent/export';
 import { isBlockedSite, quote } from '@src/browser-control';
 import { clearShortcuts, isStartUrl } from '@src/store/shortcuts';
@@ -91,6 +103,8 @@ export class RunManager {
   #sessions = new Map<string, Session>();
   /** The mode of a conversation with a run, read by the page header each turn (the user may change it). */
   #modes = new Map<string, Conversation['mode']>();
+  /** 本对话选择运行的智能体；缺省用设置里的默认智能体。 */
+  #agents = new Map<string, string>();
   #records = new Map<string, RunRecord>();
   readonly scope: TabScope;
   /** The glow on the pages a working run acts on. */
@@ -560,6 +574,20 @@ export class RunManager {
       case 'set-model':
         await this.#setModel(command.conversationId, { model: command.model, reasoning: command.reasoning });
         return;
+      case 'set-agent': {
+        const conversationId = command.conversationId;
+        if (!(await getConversation(conversationId))) return;
+        if (command.agentId) this.#agents.set(conversationId, command.agentId);
+        else this.#agents.delete(conversationId);
+        // 把 agentId 写进 live pair，让面板的模型列表跟着智能体切换。
+        const existing = await getLive(conversationId);
+        if (existing) await this.#writeLive(conversationId, existing);
+        else {
+          const fallback = await livePair(conversationId);
+          if (fallback) await this.#writeLive(conversationId, fallback);
+        }
+        return;
+      }
       case 'history':
         return this.#history(connection, command.query);
       case 'rename': {
@@ -1183,13 +1211,16 @@ export class RunManager {
 
   /** Writes a live pair to `storage.session` and tells the conversation's panels. */
   async #writeLive(conversationId: string, pair: LivePair): Promise<void> {
-    const pairOf = (p: LivePair): LivePair => ({
+    // The stored pair keeps its own agentId; only the next pair reads the live choice map, so a set-agent switch
+    // compares old against new instead of mapping both sides through the already-updated map (which never differs).
+    const pairOf = (p: LivePair, agentId?: string): LivePair => ({
       model: { providerId: p.model.providerId, model: p.model.model },
       reasoning: p.reasoning,
+      ...(agentId ? { agentId } : {}),
     });
-    const next = pairOf(pair);
+    const next = pairOf(pair, this.#agents.get(conversationId));
     const stored = await getLive(conversationId);
-    if (stored && JSON.stringify(pairOf(stored)) === JSON.stringify(next)) return;
+    if (stored && JSON.stringify(pairOf(stored, stored.agentId)) === JSON.stringify(next)) return;
     await setLive(conversationId, next);
     this.emit(conversationId, { type: 'live', pair: next });
   }
@@ -1288,54 +1319,85 @@ export class RunManager {
       await this.#setStatus(record, 'running');
       let end: LoopEnd | undefined;
       try {
-        const model = await resolveModel(await starting);
         const settings = (await settingsStorage.get()) ?? DEFAULT_SETTINGS;
-        record.model = await runModel(model.ref);
-        if (record.model) {
-          // Written now, so a run the restart cuts still counts its model's outcome.
-          await putRun(record);
-          void runStarted(record.model, model.reasoning, conversation.mode, model.profile.vision, this.#runs.size > 1);
-        }
         this.#modes.set(conversationId, conversation.mode);
         const session = await this.#openSession(conversationId);
         record.tabs = session.tabIds();
-        const tools = toolsForRun({ vision: model.profile.vision });
-        const loop = new AgentLoop({
-          conversationId,
-          runId,
-          startedAt: record.startedAt,
-          model,
-          system: agentSystemPrompt({
-            responseLanguage: settings.responseLanguage,
-            tools: tools.map(t => t.name),
-            customInstructions: settings.customInstructions,
-          }),
-          tools,
-          mode: () => this.#modes.get(conversationId) ?? conversation.mode,
-          layer: layerPort(session, this.border),
-          host: this.#host(conversationId, session),
-          signal: controller.signal,
-          emit: event => this.emit(conversationId, event),
-          turnCap: settings.turnCap,
-          thumbnail,
-          agentTool: (call, signal) => this.#agentTool(conversationId, call, signal),
-          restore: restore ? { debt: restore.debt as DebtEntry[], guards: restore.guards } : undefined,
-          takeSteering: () => {
-            const queue = this.#queues.get(conversationId)?.splice(0) ?? [];
-            if (queue.length) this.#emitQueue(conversationId);
-            return queue.map(q => q.text);
-          },
-        });
-        const active = this.#runs.get(conversationId);
-        if (active?.runId === runId) active.loop = loop;
-        loopRef = loop;
-        loop.hasSteering = () => (this.#queues.get(conversationId)?.length ?? 0) > 0;
-        end = await loop.run();
+        // 本对话的智能体：面板的选择（live）覆盖设置里的默认；找不到就落到内置 Agent。
+        const agentId = this.#agents.get(conversationId) ?? settings.defaultAgentId ?? BUILTIN_AGENT_ID;
+        const agents = await agentsStorage.get();
+        const agent = findAgent(agents, agentId);
+        if (agent?.kind === 'opencode-v2') {
+          end = await runV2Turn({
+            conversationId,
+            runId,
+            text: await this.#lastUserText(conversationId),
+            turnCap: settings.turnCap,
+            layer: session,
+            border: this.border,
+            signal: controller.signal,
+            emit: event => this.emit(conversationId, event),
+            requestPermission: (data, signal) => this.broker.open(conversationId, 'agent-permission', data, signal),
+            service: {
+              url: agent.url,
+              password: (await agentKeysStorage.get())[agentKeyOf(agent.id)] ?? '',
+              directory: agent.directory,
+            },
+          });
+        } else {
+          const model = await resolveModel(await starting);
+          record.model = await runModel(model.ref);
+          if (record.model) {
+            // Written now, so a run the restart cuts still counts its model's outcome.
+            await putRun(record);
+            void runStarted(
+              record.model,
+              model.reasoning,
+              conversation.mode,
+              model.profile.vision,
+              this.#runs.size > 1,
+            );
+          }
+          const tools = toolsForRun({ vision: model.profile.vision });
+          const loop = new AgentLoop({
+            conversationId,
+            runId,
+            startedAt: record.startedAt,
+            model,
+            system: agentSystemPrompt({
+              responseLanguage: settings.responseLanguage,
+              tools: tools.map(t => t.name),
+              customInstructions: settings.customInstructions,
+            }),
+            tools,
+            mode: () => this.#modes.get(conversationId) ?? conversation.mode,
+            layer: layerPort(session, this.border),
+            host: this.#host(conversationId, session),
+            signal: controller.signal,
+            emit: event => this.emit(conversationId, event),
+            turnCap: settings.turnCap,
+            thumbnail,
+            agentTool: (call, signal) => this.#agentTool(conversationId, call, signal),
+            restore: restore ? { debt: restore.debt as DebtEntry[], guards: restore.guards } : undefined,
+            takeSteering: () => {
+              const queue = this.#queues.get(conversationId)?.splice(0) ?? [];
+              if (queue.length) this.#emitQueue(conversationId);
+              return queue.map(q => q.text);
+            },
+          });
+          const active = this.#runs.get(conversationId);
+          if (active?.runId === runId) active.loop = loop;
+          loopRef = loop;
+          loop.hasSteering = () => (this.#queues.get(conversationId)?.length ?? 0) > 0;
+          end = await loop.run();
+        }
         record.turns += end.turns;
         record.usage = addUsage(record.usage, end.usage);
         record.outcome = end.outcome;
-        record.debt = loop.debt;
-        record.guards = loop.guards.state;
+        if (loopRef) {
+          record.debt = loopRef.debt;
+          record.guards = loopRef.guards.state;
+        }
         if (end.status === 'failed' && end.reason) await this.#notice(conversationId, end.reason, 'error');
         if (end.status === 'stopped') {
           await this.#notice(conversationId, STOPPED_BY_USER, 'info');
@@ -1395,6 +1457,17 @@ export class RunManager {
       type: 'message_end',
       entry: { kind: 'notice', id: entry.id, text, tone, at: entry.at },
     });
+  }
+
+  /** The branch's last user message: what a V2 engine run answers. */
+  async #lastUserText(conversationId: string): Promise<string> {
+    const branch = await activeBranch(conversationId);
+    const last = [...branch].reverse().find(e => e.type === 'message' && e.message.role === 'user' && !e.appOwned);
+    if (!last || last.type !== 'message') return '';
+    return last.message.parts
+      .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+      .map(p => p.text)
+      .join('\n');
   }
 }
 

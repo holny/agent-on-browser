@@ -219,7 +219,7 @@ export function createModel(spec: ModelSpec, options: CreateModelOptions = {}): 
         apiKey: apiKey || kind,
         baseURL: openAICompatibleBaseUrl(kind, spec.baseUrl),
         ...(kind === 'openrouter'
-          ? { headers: { 'HTTP-Referer': 'https://nanobrowser.ai', 'X-Title': 'Nanobrowser' } }
+          ? { headers: { 'HTTP-Referer': 'https://nanobrowser.ai', 'X-Title': 'AgentOnBrowser' } }
           : {}),
         // OpenRouter reports a request's cost in its usage when asked.
         fetch: accounting?.fetch ?? fetch,

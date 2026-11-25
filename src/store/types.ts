@@ -19,6 +19,8 @@ export interface ModelRef {
 export interface LivePair {
   model: ModelRef;
   reasoning: ReasoningEffort;
+  /** 哪个智能体回答这个对话；缺省用设置里的默认智能体。 */
+  agentId?: string;
 }
 
 export interface Usage {

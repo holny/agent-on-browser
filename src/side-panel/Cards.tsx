@@ -292,6 +292,55 @@ function SaveFileCard({ prompt, answer }: { prompt: OpenPrompt; answer: (a: unkn
   );
 }
 
+function AgentPermissionCard({ prompt, answer }: { prompt: OpenPrompt; answer: (a: unknown) => void }) {
+  const d = prompt.data;
+  const canRemember = !!d.canRemember;
+  const tool = plain(d.tool);
+  const resources = (Array.isArray(d.resources) ? d.resources : [d.resources]).map(plain).filter(Boolean);
+  return (
+    <Frame
+      title={t('card.permission.title')}
+      tone="write"
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && canRemember) answer('approve-always');
+        else if (e.key === 'Enter') answer('approve');
+        else if (e.key === 'Escape') {
+          e.stopPropagation();
+          answer('decline');
+        }
+      }}>
+      <Line>{plain(d.action)}</Line>
+      {tool ? <Line muted>{t('card.permission.tool', { tool })}</Line> : null}
+      {resources.length ? (
+        <div className="flex flex-col gap-1">
+          <Line muted>{t('card.permission.resources')}</Line>
+          {resources.map((r, i) => (
+            <p key={i} className="break-all border-l-2 border-nb-sky pl-2 font-mono text-xs">
+              {r}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      {d.pattern ? <Line muted>{t('card.permission.pattern', { pattern: plain(d.pattern) })}</Line> : null}
+      <Line muted>{t('card.permission.untrusted')}</Line>
+      <Buttons>
+        <button type="button" className={primary} onClick={() => answer('approve')}>
+          {t('card.allowOnce')}
+        </button>
+        {canRemember ? (
+          <button type="button" className={secondary} onClick={() => answer('approve-always')}>
+            {t('card.permission.always')}
+          </button>
+        ) : null}
+        <button type="button" className={secondary} onClick={() => answer('decline')}>
+          {t('card.decline')}
+        </button>
+      </Buttons>
+    </Frame>
+  );
+}
+
 export function Cards({ prompts, answer }: { prompts: OpenPrompt[]; answer: (id: string, a: unknown) => void }) {
   if (!prompts.length) return null;
   return (
@@ -311,6 +360,8 @@ export function Cards({ prompts, answer }: { prompts: OpenPrompt[]; answer: (id:
             return <ConfirmCard key={p.id} prompt={p} answer={reply} />;
           case 'save-file':
             return <SaveFileCard key={p.id} prompt={p} answer={reply} />;
+          case 'agent-permission':
+            return <AgentPermissionCard key={p.id} prompt={p} answer={reply} />;
           default:
             return null;
         }

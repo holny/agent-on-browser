@@ -1,17 +1,17 @@
 {
   "extName": {
-    "message": "Nanobrowser"
+    "message": "AgentOnBrowser"
   },
   "extDescription": {
     "message": "An AI agent that works in your browser, in a side panel beside the page"
   },
   "actionTitle": {
-    "message": "Open Nanobrowser"
+    "message": "Open AgentOnBrowser"
   },
   "commandOpenPanel": {
-    "message": "Open the Nanobrowser panel"
+    "message": "Open the AgentOnBrowser panel"
   },
   "menuAskAboutSelection": {
-    "message": "Ask Nanobrowser about this"
+    "message": "Ask AgentOnBrowser about this"
   }
 }

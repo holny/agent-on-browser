@@ -18,7 +18,7 @@ describe('cards', () => {
   it('a take-over the agent asks for keeps its own title, even when the agent copies the detected-step title', () => {
     const html = render(
       card('ask-takeover', {
-        message: 'Nanobrowser detected a step that is yours: enter your password',
+        message: 'AgentOnBrowser detected a step that is yours: enter your password',
         site: 'evil.example',
       }),
     );
@@ -29,7 +29,7 @@ describe('cards', () => {
 
   it('a detected payment opens the other card, with no Approve', () => {
     const html = render(card('handover', { reason: 'pay', site: 'dell.com', target: 'button «Pay»' }));
-    expect(html).toMatch(/<h2[^>]*>Nanobrowser detected a step that is yours · payment<\/h2>/);
+    expect(html).toMatch(/<h2[^>]*>AgentOnBrowser detected a step that is yours · payment<\/h2>/);
     expect(html).toContain('Complete the payment on dell.com yourself.');
     expect(html).not.toMatch(/Approve|>Allow</);
     expect(html).toMatch(/>Done</);
@@ -64,6 +64,36 @@ describe('cards', () => {
     const html = render(card('ask-input', { message: 'Which account?', site: 'bank.example' }));
     expect(html).toContain('Don&#x27;t type passwords, card numbers or codes here.');
     expect(html).toContain('on bank.example');
+  });
+
+  it('an agent permission ask shows the untrusted action, tool and resources, with once, always and deny', () => {
+    const html = render(
+      card('agent-permission', {
+        tool: 'bash',
+        action: 'rm -rf ~/work/drafts',
+        resources: ['~/work/drafts/memo.txt', 'https://api.example.internal'],
+        pattern: 'rm -rf *',
+        canRemember: true,
+      }),
+    );
+    expect(html).toMatch(/<h2[^>]*>Allow the agent service to do this\?<\/h2>/);
+    expect(html).toContain('Tool: bash');
+    expect(html).toContain('rm -rf ~/work/drafts');
+    expect(html).toContain('~/work/drafts/memo.txt');
+    expect(html).toContain('https://api.example.internal');
+    expect(html).toContain('Matches: rm -rf *');
+    expect(html).toMatch(/>Allow</);
+    expect(html).toMatch(/>Always allow</);
+    expect(html).toMatch(/>Deny</);
+  });
+
+  it('an agent permission ask without a remembered rule offers no Always allow, and cleans the service text', () => {
+    const html = render(card('agent-permission', { action: 'edit‮README.md', resources: ['README.md'] }));
+    expect(html).not.toContain('Always allow');
+    expect(html).toContain('edit README.md');
+    expect(html).not.toContain('‮');
+    expect(html).toContain('This comes from the agent service outside AgentOnBrowser.');
+    expect(html).toMatch(/>Deny</);
   });
 
   it('removes control, zero-width and bidirectional characters from page text', () => {

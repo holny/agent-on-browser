@@ -38,12 +38,14 @@
 //   GET  /__live/keys             provider keys from this process's environment, only when NB_LIVE=1 (for the
 //                                 live provider check; keys are never written to a file)
 import { createServer } from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { EventEmitter } from 'node:events';
+import { startV2Mock, v2MockReset, v2MockScript, v2MockSnapshot } from './v2-mock.mjs';
 
 export const PORT = Number(process.env.FIXTURE_PORT ?? 8787);
 const PAGES = resolve(import.meta.dirname, 'pages');
+const v2Mock = await startV2Mock();
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -133,6 +135,30 @@ async function handle(req, res) {
       const body = JSON.parse((await readBody(req)) || '{}');
       autorunEvents.emit(path.slice('/__autorun/'.length), body);
       return send(res, 200, { ok: true });
+    }
+    if (path.startsWith('/__v2mock/')) {
+      if (path === '/__v2mock/info') return send(res, 200, { url: v2Mock.url, pid: process.pid });
+      if (path === '/__v2mock/state') return send(res, 200, v2MockSnapshot());
+      if (path === '/__v2mock/reset' && req.method === 'POST') {
+        v2MockReset();
+        return send(res, 200, { ok: true });
+      }
+      if (path === '/__v2mock/script' && req.method === 'POST') {
+        const body = JSON.parse((await readBody(req)) || '{}');
+        v2MockScript(body.asks);
+        return send(res, 200, { ok: true, queued: v2MockSnapshot().asks.length });
+      }
+      // Creates a real-directory probe project whose config makes the service ask before running its own bash tool,
+      // for the live-service permission check. Only /tmp paths, so the check stays self-contained.
+      if (path === '/__v2mock/probe-project' && req.method === 'POST') {
+        const body = JSON.parse((await readBody(req)) || '{}');
+        const dir = String(body.directory ?? '');
+        if (!dir.startsWith('/tmp/')) return send(res, 400, { error: 'directory must be under /tmp' });
+        await mkdir(dir, { recursive: true });
+        await writeFile(join(dir, 'opencode.json'), JSON.stringify({ permission: { bash: 'ask' } }));
+        return send(res, 200, { ok: true, directory: dir });
+      }
+      return send(res, 404, { error: 'unknown endpoint' });
     }
     if (path.startsWith('/__llm/')) return handleLlm(req, res, path);
     if (path === '/__posthog/i/v0/e/' && req.method === 'POST') {

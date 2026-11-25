@@ -5,7 +5,9 @@ import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import { applyTheme } from '@src/ui/theme';
 import type { MessageKey } from '@src/ui/i18n';
+import { websiteUrl } from '@src/ui/links';
 import { GeneralSection } from './GeneralSection';
+import { AgentSection } from './AgentSection';
 import { ProvidersSection } from './ProvidersSection';
 import { PermissionsSection } from './PermissionsSection';
 import { ShortcutsSection } from './ShortcutsSection';
@@ -13,10 +15,10 @@ import { MemorySection } from './MemorySection';
 import { DataSection } from './DataSection';
 import { AboutSection } from './AboutSection';
 import { Logo } from '@src/ui/icons';
-import { websiteUrl } from '@src/ui/links';
 
 const SECTIONS: Array<{ id: string; label: MessageKey; render: () => JSX.Element }> = [
   { id: 'general', label: 'settings.nav.general', render: () => <GeneralSection /> },
+  { id: 'agent', label: 'settings.nav.agent', render: () => <AgentSection /> },
   { id: 'providers', label: 'settings.nav.providers', render: () => <ProvidersSection /> },
   { id: 'permissions', label: 'settings.nav.permissions', render: () => <PermissionsSection /> },
   { id: 'shortcuts', label: 'settings.nav.shortcuts', render: () => <ShortcutsSection /> },

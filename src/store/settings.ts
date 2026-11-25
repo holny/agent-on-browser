@@ -5,6 +5,7 @@ import { resolveProfile } from '../llm/profiles';
 import type { LearntFacts } from '../llm/profiles';
 import { MAX_CONTEXT_WINDOW, MIN_CONTEXT_WINDOW } from '../llm/catalogue';
 import type { ReasoningEffort, ReasoningSupport } from '../llm/catalogue';
+import { newId } from './conversations';
 import { createStorage } from './storage';
 import type { LivePair, ModelRef, PermissionMode } from './types';
 
@@ -38,7 +39,26 @@ export interface Settings {
   analyticsStats: boolean;
   /** A glowing border on the pages a working run acts on. */
   pageBorder: boolean;
+  /** The brain behind a run: which agent handles it. Null means the extension's built-in agent. */
+  defaultAgentId: string | null;
+  /** 遗留标记：废弃的 ACP 实验（acpMode）与旧引擎字段（agentEngine/v2Service*）的迁移在 Worker 首启完成。 */
+  legacyAgentMigrated: boolean;
 }
+
+export type AgentEngine = 'builtin' | 'opencode-v2';
+
+/** 一个外部智能体接入配置： kind 决定协议与连接字段。 */
+export interface AgentConfig {
+  id: string;
+  kind: 'opencode-v2';
+  name: string;
+  /** OpenCode V2 服务地址，如 http://localhost:49374。 */
+  url: string;
+  /** 项目目录（OpenCode 的 location）：会话与浏览器工具绑定在它上。 */
+  directory?: string;
+}
+
+export const BUILTIN_AGENT_ID = 'builtin';
 
 export const DEFAULT_SETTINGS: Settings = {
   defaultMode: 'ask',
@@ -57,17 +77,62 @@ export const DEFAULT_SETTINGS: Settings = {
   analyticsPing: true,
   analyticsStats: true,
   pageBorder: true,
+  defaultAgentId: BUILTIN_AGENT_ID,
+  legacyAgentMigrated: false,
 };
 
 /** Stored settings over the defaults, so a field added later has its default. */
 export function mergeSettings(stored: unknown): Settings {
-  return { ...DEFAULT_SETTINGS, ...(stored && typeof stored === 'object' ? (stored as Partial<Settings>) : {}) };
+  const raw = stored && typeof stored === 'object' ? (stored as Record<string, unknown>) : {};
+  const merged = { ...DEFAULT_SETTINGS, ...raw } as Settings & Record<string, unknown>;
+  // `acpMode` was the abandoned ACP experiment; a user left in it moves to the V2 engine.
+  if (!('defaultAgentId' in raw) && (raw.acpMode === true || raw.agentEngine === 'opencode-v2'))
+    merged.defaultAgentId = 'opencode-v2';
+  delete merged.acpMode;
+  delete merged.agentEngine;
+  return merged;
 }
 
 export const settingsStorage = createStorage<Settings>('nb.settings', DEFAULT_SETTINGS, {
   liveUpdate: true,
   merge: mergeSettings,
 });
+
+/** 已添加的智能体接入配置（内置 Agent 不在此列，它是隐含选项）。 */
+export const agentsStorage = createStorage<AgentConfig[]>('nb.agents', [], {
+  liveUpdate: true,
+  merge: stored => {
+    const list = Array.isArray(stored) ? (stored as AgentConfig[]) : [];
+    // 相同 kind+url+directory 的重复条目（旧引导页多次保存所致）合并为一条。
+    const seen = new Set<string>();
+    const unique = list.filter(a => {
+      const key = `${a.kind}|${a.url ?? ''}|${a.directory ?? ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return unique;
+  },
+});
+/** 智能体的服务密码，按 agent id 存放：永不导出、永不日志。 */
+export const agentKeysStorage = createStorage<Record<string, string>>('nb.agent-keys', {}, { liveUpdate: true });
+
+export function findAgent(list: AgentConfig[], id: string): AgentConfig | null {
+  return list.find(a => a.id === id) ?? null;
+}
+
+export function addAgent(list: AgentConfig[], config: Omit<AgentConfig, 'id'>): AgentConfig[] {
+  return [...list, { ...config, id: newId() }];
+}
+
+/** 智能体的服务密码在 agent-keys 里，键为 `agent:<id>`。 */
+export function agentKeyOf(id: string): string {
+  return `agent:${id}`;
+}
+
+export function addAgentKeys(keys: Record<string, string>, id: string, password: string): Record<string, string> {
+  return { ...keys, [agentKeyOf(id)]: password };
+}
 
 export type { ProviderKind };
 

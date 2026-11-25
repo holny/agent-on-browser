@@ -1,12 +1,23 @@
 // The side panel. A view: it draws the worker's events and sends commands; it holds no state a run depends on, and it
 // never reads the conversation stores.
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
-import { capabilityOf, DEFAULT_SETTINGS, keysStorage, providersStorage, settingsStorage } from '@src/store/settings';
+import {
+  agentKeysStorage,
+  agentsStorage,
+  BUILTIN_AGENT_ID,
+  capabilityOf,
+  DEFAULT_SETTINGS,
+  keysStorage,
+  providersStorage,
+  settingsStorage,
+} from '@src/store/settings';
 import type { ProviderConfig } from '@src/store/settings';
 import type { LivePair, ModelRef, PermissionMode } from '@src/store/types';
 import { makePair } from '@src/llm/profiles';
 import type { ReasoningEffort } from '@src/llm/catalogue';
+import { listModels } from '@src/opencode-v2';
 import { useStorage } from '@src/ui/hooks';
+import { useAgentHealth } from '@src/ui/agent-health';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
 import { applyTheme } from '@src/ui/theme';
 import { PanelClient, panelTabId } from './client';
@@ -22,7 +33,6 @@ import { HistoryDrawer } from './History';
 import { Cards, containsCardNumber } from './Cards';
 import { NoticeCard } from './NoticeCard';
 import { WhatsNewCard, useWhatsNew } from './WhatsNewCard';
-import { RatingCard, ratingMovedOn, useRatingCard } from './RatingCard';
 import { TabBar } from './TabBar';
 import { QueueList, RunBar } from './RunControls';
 import type { MessageKey } from '@src/ui/i18n';
@@ -33,17 +43,12 @@ import type { SavedShortcut } from '@src/store/shortcuts';
 import { useShortcuts } from '@src/ui/shortcuts';
 import { AutoNotice } from '@src/ui/auto-notice';
 import { HistoryIcon, LogoMark, NewChatIcon, SettingsIcon } from '@src/ui/icons';
-import { websiteUrl } from '@src/ui/links';
 
 const NO_PROVIDERS: ProviderConfig[] = [];
 const NO_KEYS: Record<string, string> = {};
 
 /** The starters a new conversation offers when no shortcut is pinned: a short label and the text it sends. */
-const STARTERS = [
-  { label: 'panel.starter.star', text: 'panel.starter.starText' },
-  { label: 'panel.starter.summarize', text: 'panel.starter.summarizeText' },
-  { label: 'panel.starter.news', text: 'panel.starter.newsText' },
-] as const;
+const STARTERS = [{ label: 'panel.starter.summarize', text: 'panel.starter.summarizeText' }] as const;
 
 /**
  * Brings a conversation's own tab to the front with its panel open. `sidePanel.open` needs the user's gesture, so it is
@@ -69,10 +74,13 @@ export function App() {
   useLanguage();
   const settings = useStorage(settingsStorage, DEFAULT_SETTINGS);
   const providers = useStorage(providersStorage, NO_PROVIDERS);
+  const agents = useStorage(agentsStorage, []);
   // The no-model card waits for the providers to be read, so it does not flash while the panel opens.
   const providersRead = useSyncExternalStore(providersStorage.subscribe, () => providersStorage.getSnapshot() !== null);
   const apiKeys = useStorage(keysStorage, NO_KEYS);
+  const agentKeys = useStorage(agentKeysStorage, {});
   const whatsNew = useWhatsNew();
+  const [draftAgentId, setDraftAgentId] = useState<string | null>(null);
   // Voice input: the panel sends the recording to the chosen voice model's provider, with its key.
   const voice = voiceSetup(settings, providers, apiKeys);
   const transcribe = voice
@@ -185,7 +193,7 @@ export function App() {
     return () => created?.close();
   }, []);
 
-  const models: ModelChoice[] = useMemo(
+  const builtinModels: ModelChoice[] = useMemo(
     () =>
       providers.flatMap(p =>
         p.models
@@ -197,6 +205,57 @@ export function App() {
       ),
     [providers],
   );
+
+  // The conversation's agent: the live choice, the draft of a new chat, or the settings' default.
+  // 默认规则（用户裁定）：配置了外部智能体 → 默认用它（优先设置里指到的，否则第一个）；没配外部智能体 → 内置。
+  const externalAgents = agents.filter(a => a.kind === 'opencode-v2');
+  const { health: agentHealth, refresh: refreshAgentHealth } = useAgentHealth(
+    externalAgents.map(a => ({ id: a.id, url: a.url })),
+  );
+  const configuredDefault =
+    settings.defaultAgentId && agents.some(a => a.id === settings.defaultAgentId)
+      ? settings.defaultAgentId
+      : (externalAgents[0]?.id ?? BUILTIN_AGENT_ID);
+  const agentId = state.live?.agentId ?? draftAgentId ?? configuredDefault;
+  const agent = agents.find(a => a.id === agentId) ?? null;
+  /** 选智能体：对话里即时切换；新对话记住为默认。 */
+  const chooseAgent = (next: string) => {
+    if (state.conversationId) {
+      client?.send({ type: 'set-agent', conversationId: state.conversationId, agentId: next });
+      return;
+    }
+    setDraftAgentId(next);
+    void settingsStorage.set(s => ({ ...s, defaultAgentId: next }));
+  };
+  const isV2 = agent?.kind === 'opencode-v2';
+
+  const [serviceModels, setServiceModels] = useState<ModelChoice[]>([]);
+  useEffect(() => {
+    if (!agent || agent.kind !== 'opencode-v2' || !agent.url) {
+      setServiceModels([]);
+      return;
+    }
+    let alive = true;
+    const password = agentKeys[agent.id] ?? '';
+    listModels({ baseUrl: agent.url, ...(password ? { password } : {}) })
+      .then(list => {
+        if (!alive) return;
+        setServiceModels(
+          list.map(m => ({
+            ref: { providerId: m.providerID, model: m.modelID },
+            label: `${m.name} · ${agent.name}`,
+            name: m.name,
+            capability: capabilityOf(providers, { providerId: m.providerID, model: m.modelID }),
+          })),
+        );
+      })
+      .catch(() => alive && setServiceModels([]));
+    return () => {
+      alive = false;
+    };
+  }, [agent?.id, agent?.url, agentKeys, agent?.name, providers]);
+
+  const models: ModelChoice[] = isV2 ? serviceModels : builtinModels;
 
   const conversation = state.conversation;
   const mode: PermissionMode = conversation?.mode ?? draftMode ?? settings.defaultMode;
@@ -224,10 +283,7 @@ export function App() {
     void settingsStorage.set(s => ({ ...s, defaultModel: next.model, reasoning: next.reasoning }));
   };
   const active = isActive(state.status);
-  const ratingCard = useRatingCard(state.conversationId, state.startedAt, active, !!whatsNew);
-  /** Sends a command the user gave that starts a run; with the rating card showing, it is their Maybe later. */
   const startRun = (command: PanelCommand) => {
-    if (ratingCard) ratingMovedOn();
     client?.send(command);
   };
   const history = state.entries.filter(e => e.kind === 'user').map(e => (e as { text: string }).text);
@@ -362,16 +418,9 @@ export function App() {
       {/* The header has no field of its own, so it is part of the panel; a line under it only above a conversation. */}
       <header
         className={`flex items-center gap-1 border-b px-2 py-1.5 ${empty && state.loaded ? 'border-transparent' : 'border-nb-border/60'}`}>
-        {/* The mark opens the website in a new tab. */}
-        <a
-          href={websiteUrl('/', 'side-panel')}
-          target="_blank"
-          rel="noreferrer"
-          title={t('panel.website')}
-          aria-label={t('panel.website')}
-          className="ml-1 flex shrink-0 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-nb-accent">
+        <span className="ml-1 flex shrink-0">
           <LogoMark size={20} />
-        </a>
+        </span>
         {/* The title is for screen readers only; the header shows the mark and three buttons. */}
         <h1 className="sr-only">{conversation?.title || t('panel.newChat')}</h1>
         <span className="flex-1" />
@@ -510,20 +559,24 @@ export function App() {
         mode={mode}
         model={model}
         models={models}
-        noModel={providersRead && !models.length}
+        agents={agents.map(a => ({ id: a.id, name: a.name }))}
+        agentId={agentId}
+        agentHealth={agentHealth}
+        refreshAgentHealth={refreshAgentHealth}
+        onAgent={chooseAgent}
+        engineManaged={settings.defaultAgentId !== BUILTIN_AGENT_ID}
+        noModel={providersRead && !models.length && settings.defaultAgentId === BUILTIN_AGENT_ID}
         history={history}
         notice={
           <>
-            {/* The What's new card comes first; the notices below still show under it. The rating card waits for it (useRatingCard). */}
             {whatsNew ? <WhatsNewCard release={whatsNew} /> : null}
-            {ratingCard ? <RatingCard /> : null}
             {attachError ? (
               <p className="text-xs text-amber-700 dark:text-amber-300" role="alert">
                 {attachError}
               </p>
             ) : autoNotice ? (
               <AutoNotice onDone={() => setAutoNotice(false)} />
-            ) : providersRead && !models.length ? (
+            ) : providersRead && !models.length && settings.defaultAgentId === BUILTIN_AGENT_ID ? (
               <NoticeCard
                 title={t('composer.needModelTitle')}
                 action={{

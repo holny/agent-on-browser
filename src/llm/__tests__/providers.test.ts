@@ -221,7 +221,7 @@ describe('providers', () => {
   it('OpenRouter sends its headers', async () => {
     const r = await capture({ kind: 'openrouter', modelName: 'anthropic/claude-sonnet-5.5', apiKey: 'or' });
     expect(r.url).toBe('https://openrouter.ai/api/v1/chat/completions');
-    expect(r.headers.get('x-title')).toBe('Nanobrowser');
+    expect(r.headers.get('x-title')).toBe('AgentOnBrowser');
   });
 });
 

@@ -8,11 +8,13 @@ import { Recorder, toWav } from '@src/ui/voice';
 import { t } from '@src/ui/i18n';
 import type { MessageKey } from '@src/ui/i18n';
 import type { SavedShortcut } from '@src/store/shortcuts';
+import type { AgentHealth } from '@src/ui/agent-health';
 import { MAX_FILES } from '@src/store/attachments';
 import { TabPicker } from './TabBar';
 import { NoticeCard } from './NoticeCard';
 import { ModeMenu } from '@src/ui/mode-menu';
 import { ModelMenu } from './ModelMenu';
+import { AgentMenu } from './AgentMenu';
 import type { ModelChoice } from './ModelMenu';
 import type { ReasoningEffort } from '@src/llm/catalogue';
 import { CloseIcon, FileIcon, MicIcon, PlusIcon, SendIcon, SpinnerIcon, StarIcon, StopIcon } from '@src/ui/icons';
@@ -157,6 +159,12 @@ export function Composer({
   mode,
   model,
   models,
+  engineManaged = false,
+  agents = [],
+  agentHealth,
+  refreshAgentHealth,
+  agentId = 'builtin',
+  onAgent,
   reasoning = 'none',
   onReasoning,
   history,
@@ -185,6 +193,17 @@ export function Composer({
   mode: PermissionMode;
   model: ModelRef | null;
   models: ModelChoice[];
+  /** The engine manages the model itself (OpenCode V2): sending needs no extension model. */
+  engineManaged?: boolean;
+  /** The agents the user added, for the picker. */
+  agents?: Array<{ id: string; name: string }>;
+  /** The conversation's chosen agent; 'builtin' is the extension's own. */
+  agentId?: string;
+  /** Live service status per agent id, for the breathing dots in the picker. */
+  agentHealth?: Record<string, AgentHealth>;
+  /** Triggers an immediate health check, e.g. when the picker opens. */
+  refreshAgentHealth?: () => void;
+  onAgent?: (agentId: string) => void;
   /** The conversation's reasoning effort, shown in the model picker. */
   reasoning?: ReasoningEffort;
   onReasoning?: (reasoning: ReasoningEffort) => void;
@@ -388,7 +407,7 @@ export function Composer({
 
   const send = () => {
     const value = text.trim();
-    if ((!value && !((files.length || quotes.length) && !active)) || !model) return;
+    if ((!value && !((files.length || quotes.length) && !active)) || (!model && !engineManaged)) return;
     onSend(value);
     setText('');
     setRecall(null);
@@ -593,10 +612,13 @@ export function Composer({
               />
             </>
           ) : null}
-          <ModeMenu
-            mode={mode}
-            onMode={onMode}
-            title={t('composer.modeShortcut', { keys: /Mac/i.test(navigator.userAgent) ? '⌘⇧P' : 'Ctrl+Shift+P' })}
+          <AgentMenu
+            agents={agents}
+            agentId={agentId}
+            running={active}
+            health={agentHealth}
+            onOpenRefresh={refreshAgentHealth}
+            onAgent={onAgent ?? (() => undefined)}
           />
           <ModelMenu
             models={models}
@@ -605,6 +627,11 @@ export function Composer({
             running={active}
             onModel={onModel}
             onReasoning={next => onReasoning?.(next)}
+          />
+          <ModeMenu
+            mode={mode}
+            onMode={onMode}
+            title={t('composer.modeShortcut', { keys: /Mac/i.test(navigator.userAgent) ? '⌘⇧P' : 'Ctrl+Shift+P' })}
           />
           <span className="flex-1" />
           {transcribe !== undefined ? (
@@ -654,7 +681,7 @@ export function Composer({
           ) : (
             <button
               type="button"
-              disabled={(!text.trim() && !files.length && !quotes.length) || !model}
+              disabled={(!text.trim() && !files.length && !quotes.length) || (!model && !engineManaged)}
               aria-label={t('composer.send')}
               title={t('composer.send')}
               className="flex size-7 shrink-0 items-center justify-center rounded-full bg-nb-accent text-white shadow-sm transition-colors hover:bg-nb-accent-strong disabled:opacity-40 disabled:shadow-none disabled:hover:bg-nb-accent"

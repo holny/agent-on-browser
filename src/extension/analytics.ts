@@ -71,6 +71,10 @@ async function settings(): Promise<Settings> {
 
 // --- The start-up step ---------------------------------------------------------------------------------------------
 
+// Telemetry is disabled in this build, permanently: even a configured .env destination is never used and
+// nothing is collected, queued or sent. The single gate is analyticsReady(), which every path checks first.
+const TELEMETRY_DISABLED = true;
+
 let ready: Promise<boolean> | null = null;
 
 /** For the checks: forget that the start-up step ran, as a new worker start would. */
@@ -84,6 +88,7 @@ export function restartAnalytics(): void {
  * missing, so the step runs again later. True once the step has finished.
  */
 export function analyticsReady(): Promise<boolean> {
+  if (TELEMETRY_DISABLED) return Promise.resolve(false);
   ready ??= startUp().then(
     () => true,
     error => {

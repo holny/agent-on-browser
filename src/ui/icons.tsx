@@ -217,12 +217,12 @@ export function LogoMark({ size = 20, className = '' }: { size?: number; classNa
   return <img src="/icon-128.png" alt="" width={size} height={size} className={`shrink-0 ${className}`} />;
 }
 
-/** The brand's horizontal logo: the mark and "Nanobrowser". */
+/** The brand's horizontal logo: the mark and "AgentOnBrowser". */
 export function Logo({ height = 28, className = '' }: { height?: number; className?: string }) {
   return (
     <img
       src="/brand/logo-horizontal.png"
-      alt="Nanobrowser"
+      alt="AgentOnBrowser"
       height={height}
       style={{ height, width: 'auto' }}
       className={className}

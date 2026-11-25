@@ -20,7 +20,7 @@ import { sleep, waitForLoad } from './helpers';
 import { panel } from './panel-chat';
 
 const NB_KEYS = ['nb.providers', 'nb.keys', 'nb.settings', 'nb.siteRules', UPGRADE_KEY, WHATS_NEW_KEY];
-const CARD = "What's new in Nanobrowser 0.3";
+const CARD = "What's new in AgentOnBrowser 0.3";
 // The quick start's first fixed starter.
 const STARTER = 'Summarize this page';
 

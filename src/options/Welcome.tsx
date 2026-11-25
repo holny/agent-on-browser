@@ -7,8 +7,15 @@ import type { ReactNode } from 'react';
 import { listModels, resolveProfile } from '@src/llm';
 import type { ModelList, ProviderKind } from '@src/llm';
 import { newId } from '@src/store/conversations';
-import { DEFAULT_SETTINGS, findModel, keysStorage, providersStorage, settingsStorage } from '@src/store/settings';
-import type { ModelEntry, ProviderConfig } from '@src/store/settings';
+import {
+  agentsStorage,
+  DEFAULT_SETTINGS,
+  findModel,
+  keysStorage,
+  providersStorage,
+  settingsStorage,
+} from '@src/store/settings';
+import type { AgentConfig, ModelEntry, ProviderConfig } from '@src/store/settings';
 import { Button, Input, Notice, Select, Switch } from '@src/ui/components';
 import { useStorage } from '@src/ui/hooks';
 import { setLanguage, t, useLanguage } from '@src/ui/i18n';
@@ -18,9 +25,9 @@ import { KeyInput, KINDS, ListedCount, OriginFix } from './ProvidersSection';
 import { SettingsCard, SettingsRow } from './SettingsCard';
 import { BrowserFeaturesRow } from './BrowserFeaturesCard';
 import { listProblem, testModel } from './model-test';
-import { EdgeExtensionsIcon, ExtensionsIcon, Logo, PinIcon, SlantedPinIcon } from '@src/ui/icons';
+import { CheckIcon, EdgeExtensionsIcon, ExtensionsIcon, Logo, PinIcon, SlantedPinIcon } from '@src/ui/icons';
 
-const STEPS: MessageKey[] = ['welcome.step.welcome', 'welcome.step.model', 'tips.title'];
+const STEPS: MessageKey[] = ['welcome.step.welcome', 'welcome.step.agent', 'tips.title'];
 const NO_PROVIDERS: ProviderConfig[] = [];
 const PANEL_PATH = 'sidepanel.html';
 
@@ -31,6 +38,7 @@ export function Welcome() {
   // Step 2's Next waits for a default model; until then, Set it later goes on.
   const hasModel = !!findModel(providers, settings.defaultModel);
   const [step, setStep] = useState(0);
+  const [agentAdded, setAgentAdded] = useState(false);
   const tabId = useRef<number | undefined>();
   useEffect(() => void setLanguage(settings.uiLanguage), [settings.uiLanguage]);
   useEffect(() => applyTheme(settings.theme), [settings.theme]);
@@ -69,6 +77,8 @@ export function Welcome() {
           {step === 0 ? <WelcomeStep /> : step === 2 ? <TipsStep /> : null}
           {/* Kept mounted, so the chosen provider and model are still there after Next and Back. */}
           <div className={step === 1 ? 'flex flex-col gap-6' : 'hidden'}>
+            <AgentQuickAdd onAdded={() => setAgentAdded(true)} />
+            <p className="text-sm text-nb-muted">{t('welcome.orProvider')}</p>
             <ModelStep />
           </div>
         </main>
@@ -81,7 +91,10 @@ export function Welcome() {
                   {t('welcome.later')}
                 </Button>
               ) : null}
-              <Button variant="primary" disabled={step === 1 && !hasModel} onClick={() => setStep(step + 1)}>
+              <Button
+                variant="primary"
+                disabled={step === 1 && !hasModel && !agentAdded}
+                onClick={() => setStep(step + 1)}>
                 {t('welcome.next')}
               </Button>
             </div>
@@ -110,6 +123,114 @@ function usePinned(): boolean | null {
     return () => clearInterval(timer);
   }, []);
   return pinned;
+}
+
+/**
+ * 引导第 2 步的本机 OpenCode 表单：地址 + 项目目录，保存后新建对话即由它回答。
+ * 目录需已存在（OpenCode 的 location 会按原样解析）；保存时向服务确认一次并回显解析结果。
+ */
+function AgentQuickAdd({ onAdded }: { onAdded: () => void }) {
+  const [url, setUrl] = useState('http://127.0.0.1:49377');
+  const [directory, setDirectory] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+
+  // 打开表单时向服务要一次默认位置，把项目目录预填成它的子目录（服务在本机，fetch 直连）。
+  useEffect(() => {
+    let alive = true;
+    const base = url.replace(/\/+$/, '');
+    if (!base) return;
+    fetch(`${base}/api/location`)
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then(info => {
+        if (alive && !directory && typeof info?.directory === 'string')
+          setDirectory(`${info.directory.replace(/\/+$/, '')}/.nanobrowser/workspace`);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [url]);
+
+  const testConnection = async () => {
+    setTesting(true);
+    setError(null);
+    try {
+      const response = await fetch(`${url.replace(/\/+$/, '')}/api/info`, { cache: 'no-store' });
+      const info = await response.json().catch(() => null);
+      setTestResult(response.ok ? `✓ OpenCode ${info?.version ?? ''}` : `✗ HTTP ${response.status}`);
+    } catch (e) {
+      setTestResult(`✗ ${String(e).slice(0, 160)}`);
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const save = () => {
+    setError(null);
+    if (!url.trim() || !directory.trim()) {
+      setError(t('welcome.agentRequired'));
+      return;
+    }
+    const config: AgentConfig = {
+      id: newId(),
+      kind: 'opencode-v2',
+      name: 'OpenCode V2',
+      url: url.trim(),
+      directory: directory.trim(),
+    };
+    void agentsStorage.set(list => [...list.filter(a => a.url !== config.url), config]);
+    void settingsStorage.set(s => ({ ...s, defaultAgentId: config.id }));
+    setSaved(true);
+    onAdded();
+  };
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-nb-border bg-nb-bg p-3">
+      <p className="text-sm font-medium">{t('welcome.agentTitle')}</p>
+      <p className="text-sm text-nb-muted">{t('welcome.agentHint')}</p>
+      <label className="flex items-center gap-3">
+        <span className="w-24 shrink-0 text-nb-muted">{t('welcome.agentUrl')}</span>
+        <Input
+          aria-label={t('welcome.agentUrl')}
+          className="flex-1"
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+        />
+      </label>
+      <label className="flex items-center gap-3">
+        <span className="w-24 shrink-0 text-nb-muted">{t('welcome.agentDirectory')}</span>
+        <Input
+          aria-label={t('welcome.agentDirectory')}
+          className="flex-1"
+          value={directory}
+          onChange={e => setDirectory(e.target.value)}
+        />
+      </label>
+      <div className="flex items-center gap-2">
+        <Button onClick={() => void testConnection()} disabled={testing}>
+          {testing ? t('agent.v2Testing') : t('agent.v2Test')}
+        </Button>
+        <Button variant="primary" onClick={save}>
+          {t('welcome.useThisAgent')}
+        </Button>
+      </div>
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {testResult ? (
+        <p
+          className={`text-sm ${testResult.startsWith('✓') ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600'}`}>
+          {testResult}
+        </p>
+      ) : null}
+      {saved ? (
+        <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+          <CheckIcon size={14} />
+          <span>{t('welcome.agentAdded')}</span>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 /** A few typical tasks, shown on the first step. */
